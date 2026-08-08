@@ -6,12 +6,23 @@ const CANVAS_SIZE = 600
 const TILE = CANVAS_SIZE / GRID
 const INITIAL_SPEED = 110
 
+const FRUITS = [
+  { color: '#e74c3c', glow: '#ff7b7b', name: 'apple' , points: 10 }, // red
+  { color: '#f1c40f', glow: '#ffe67a', name: 'banana', points: 10 }, // yellow
+  { color: '#9b59b6', glow: '#d6a8ff', name: 'grape' , points: 10 }, // purple
+  { color: '#e67e22', glow: '#ffb86a', name: 'orange', points: 10 }, // orange
+  { color: '#3498db', glow: '#7ac0ff', name: 'berry' , points: 15 }, // blue - bonus
+  { color: '#ff6b9d', glow: '#ff9ec1', name: 'cherry', points: 15 }, // pink - bonus
+  { color: '#2ecc71', glow: '#7af0a8', name: 'kiwi'  , points: 10 }, // green
+  { color: '#ffd700', glow: '#fff08a', name: 'star'  , points: 20 }, // gold - rare bonus
+]
+
 export default function App() {
   const canvasRef = useRef(null)
   const snakeRef = useRef([{ x: 10, y: 10 }])
   const dirRef = useRef({ x: 1, y: 0 })
   const nextDirRef = useRef({ x: 1, y: 0 })
-  const foodRef = useRef({ x: 15, y: 10 })
+  const foodRef = useRef({ x: 15, y: 10, color: '#e74c3c', glow: '#ff7b7b', points: 10 })
   const loopRef = useRef(null)
   const speedRef = useRef(INITIAL_SPEED)
 
@@ -27,7 +38,11 @@ export default function App() {
     do {
       pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) }
     } while (snakeRef.current.some(s => s.x === pos.x && s.y === pos.y))
-    foodRef.current = pos
+    // weighted: make gold rare (5% chance)
+    let fruit
+    if (Math.random() < 0.05) fruit = FRUITS[7] // gold star rare
+    else fruit = FRUITS[Math.floor(Math.random() * (FRUITS.length - 1))]
+    foodRef.current = { ...pos, ...fruit }
   }
 
   const draw = () => {
@@ -47,12 +62,16 @@ export default function App() {
       ctx.beginPath(); ctx.moveTo(0, i * TILE); ctx.lineTo(CANVAS_SIZE, i * TILE); ctx.stroke()
     }
 
-    // food
-    ctx.fillStyle = '#e74c3c'
-    ctx.shadowColor = '#e74c3c'
-    ctx.shadowBlur = 12
-    roundRect(ctx, food.x * TILE + 2, food.y * TILE + 2, TILE - 4, TILE - 4, 6)
+    // food - colorful with glow matching fruit
+    ctx.fillStyle = food.color
+    ctx.shadowColor = food.glow || food.color
+    ctx.shadowBlur = food.points >= 20 ? 18 : food.points >= 15 ? 14 : 12
+    roundRect(ctx, food.x * TILE + 2, food.y * TILE + 2, TILE - 4, TILE - 4, 8)
+    // inner highlight for juicy look
     ctx.shadowBlur = 0
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'
+    const hlSize = TILE * 0.22
+    roundRect(ctx, food.x * TILE + 6, food.y * TILE + 6, hlSize, hlSize, 4)
 
     // snake
     snake.forEach((seg, i) => {
@@ -101,7 +120,7 @@ export default function App() {
     }
     snakeRef.current.unshift(head)
     if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
-      const newScore = scoreRef.current + 10
+      const newScore = scoreRef.current + (foodRef.current.points || 10)
       scoreRef.current = newScore
       setScore(newScore)
       if (newScore > highScoreRef.current) {
