@@ -6,7 +6,12 @@ const CANVAS_SIZE = 600
 const TILE = CANVAS_SIZE / GRID
 const INITIAL_SPEED = 110
 
-const FRUITS = [
+type Point = { x: number; y: number }
+type Dir = Point
+type FruitDef = { color: string; glow: string; name: string; points: number }
+type Food = Point & FruitDef
+
+const FRUITS: FruitDef[] = [
   { color: '#e74c3c', glow: '#ff7b7b', name: 'apple' , points: 10 }, // red
   { color: '#f1c40f', glow: '#ffe67a', name: 'banana', points: 10 }, // yellow
   { color: '#9b59b6', glow: '#d6a8ff', name: 'grape' , points: 10 }, // purple
@@ -18,39 +23,40 @@ const FRUITS = [
 ]
 
 export default function App() {
-  const canvasRef = useRef(null)
-  const snakeRef = useRef([{ x: 10, y: 10 }])
-  const dirRef = useRef({ x: 1, y: 0 })
-  const nextDirRef = useRef({ x: 1, y: 0 })
-  const foodRef = useRef({ x: 15, y: 10, color: '#e74c3c', glow: '#ff7b7b', points: 10 })
-  const snakeColorRef = useRef('#0ea5e9')
-  const snakeGlowRef = useRef('#7dd3fc')
-  const loopRef = useRef(null)
-  const speedRef = useRef(INITIAL_SPEED)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const snakeRef = useRef<Point[]>([{ x: 10, y: 10 }])
+  const dirRef = useRef<Dir>({ x: 1, y: 0 })
+  const nextDirRef = useRef<Dir>({ x: 1, y: 0 })
+  const foodRef = useRef<Food>({ x: 15, y: 10, color: '#e74c3c', glow: '#ff7b7b', name: 'apple', points: 10 })
+  const snakeColorRef = useRef<string>('#0ea5e9')
+  const snakeGlowRef = useRef<string>('#7dd3fc')
+  const loopRef = useRef<number | null>(null)
+  const speedRef = useRef<number>(INITIAL_SPEED)
 
-  const [score, setScore] = useState(0)
-  const [highScore, setHighScore] = useState(() => Number(localStorage.getItem('snakeHighScore') || 0))
-  const [isPaused, setIsPaused] = useState(false)
-  const [isGameOver, setIsGameOver] = useState(false)
-  const [showOverlay, setShowOverlay] = useState(false)
-  const [overlayText, setOverlayText] = useState('Game Over')
+  const [score, setScore] = useState<number>(0)
+  const [highScore, setHighScore] = useState<number>(() => Number(localStorage.getItem('snakeHighScore') || 0))
+  const [isPaused, setIsPaused] = useState<boolean>(false)
+  const [isGameOver, setIsGameOver] = useState<boolean>(false)
+  const [showOverlay, setShowOverlay] = useState<boolean>(false)
+  const [overlayText, setOverlayText] = useState<string>('Game Over')
 
-  const placeFood = () => {
-    let pos
+  const placeFood = (): void => {
+    let pos: Point
     do {
       pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) }
     } while (snakeRef.current.some(s => s.x === pos.x && s.y === pos.y))
     // weighted: make gold rare (5% chance)
-    let fruit
+    let fruit: FruitDef
     if (Math.random() < 0.05) fruit = FRUITS[7] // gold star rare
     else fruit = FRUITS[Math.floor(Math.random() * (FRUITS.length - 1))]
     foodRef.current = { ...pos, ...fruit }
   }
 
-  const draw = () => {
+  const draw = (): void => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
+    if (!ctx) return
     const snake = snakeRef.current
     const food = foodRef.current
     const dir = dirRef.current
@@ -104,17 +110,17 @@ export default function App() {
     }
   }
 
-  const gameOver = () => {
+  const gameOver = (): void => {
     setIsGameOver(true)
     setShowOverlay(true)
     setOverlayText('Game Over!')
-    clearInterval(loopRef.current)
+    if (loopRef.current !== null) clearInterval(loopRef.current)
   }
 
-  const tick = () => {
+  const tick = (): void => {
     if (isPausedRef.current || isGameOverRef.current) return
     dirRef.current = { ...nextDirRef.current }
-    let head = { x: snakeRef.current[0].x + dirRef.current.x, y: snakeRef.current[0].y + dirRef.current.y }
+    let head: Point = { x: snakeRef.current[0].x + dirRef.current.x, y: snakeRef.current[0].y + dirRef.current.y }
     // wall loop - wrap around
     head.x = (head.x + GRID) % GRID
     head.y = (head.y + GRID) % GRID
@@ -135,12 +141,12 @@ export default function App() {
       if (newScore > highScoreRef.current) {
         highScoreRef.current = newScore
         setHighScore(newScore)
-        localStorage.setItem('snakeHighScore', newScore)
+        localStorage.setItem('snakeHighScore', String(newScore))
       }
       if (newScore % 50 === 0 && speedRef.current > 50) {
         speedRef.current -= 8
-        clearInterval(loopRef.current)
-        loopRef.current = setInterval(tick, speedRef.current)
+        if (loopRef.current !== null) clearInterval(loopRef.current)
+        loopRef.current = window.setInterval(tick, speedRef.current)
       }
       placeFood()
     } else {
@@ -150,16 +156,16 @@ export default function App() {
   }
 
   // refs to avoid stale closure in tick
-  const scoreRef = useRef(score)
-  const highScoreRef = useRef(highScore)
-  const isPausedRef = useRef(isPaused)
-  const isGameOverRef = useRef(isGameOver)
+  const scoreRef = useRef<number>(score)
+  const highScoreRef = useRef<number>(highScore)
+  const isPausedRef = useRef<boolean>(isPaused)
+  const isGameOverRef = useRef<boolean>(isGameOver)
   useEffect(() => { scoreRef.current = score }, [score])
   useEffect(() => { highScoreRef.current = highScore }, [highScore])
   useEffect(() => { isPausedRef.current = isPaused }, [isPaused])
   useEffect(() => { isGameOverRef.current = isGameOver }, [isGameOver])
 
-  const init = () => {
+  const init = (): void => {
     snakeRef.current = [{ x: 10, y: 10 }]
     dirRef.current = { x: 1, y: 0 }
     nextDirRef.current = { x: 1, y: 0 }
@@ -174,19 +180,19 @@ export default function App() {
     isPausedRef.current = false
     isGameOverRef.current = false
     placeFood()
-    if (loopRef.current) clearInterval(loopRef.current)
-    loopRef.current = setInterval(tick, speedRef.current)
+    if (loopRef.current !== null) clearInterval(loopRef.current)
+    loopRef.current = window.setInterval(tick, speedRef.current)
     // draw after state reset
     setTimeout(draw, 0)
   }
 
-  const setDir = (x, y) => {
+  const setDir = (x: number, y: number): void => {
     if (dirRef.current.x === -x && dirRef.current.y === -y) return
     if (nextDirRef.current.x === -x && nextDirRef.current.y === -y) return
     nextDirRef.current = { x, y }
   }
 
-  const togglePause = () => {
+  const togglePause = (): void => {
     if (isGameOverRef.current) return
     setIsPaused(p => {
       const np = !p
@@ -199,7 +205,7 @@ export default function App() {
   // keyboard + initial mount
   useEffect(() => {
     init()
-    const handler = (e) => {
+    const handler = (e: KeyboardEvent): void => {
       const k = e.key.toLowerCase()
       if (k === 'arrowup' || k === 'w') setDir(0, -1)
       else if (k === 'arrowdown' || k === 's') setDir(0, 1)
@@ -211,7 +217,7 @@ export default function App() {
     window.addEventListener('keydown', handler)
     return () => {
       window.removeEventListener('keydown', handler)
-      if (loopRef.current) clearInterval(loopRef.current)
+      if (loopRef.current !== null) clearInterval(loopRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -258,7 +264,7 @@ export default function App() {
   )
 }
 
-function darkenColor(hex, amt = 20) {
+function darkenColor(hex: string, amt = 20): string {
   // hex #rrggbb -> darker
   const num = parseInt(hex.replace('#',''),16)
   let r = (num >> 16) - amt, g = ((num >> 8) & 0xFF) - amt, b = (num & 0xFF) - amt
@@ -266,7 +272,7 @@ function darkenColor(hex, amt = 20) {
   return `rgb(${r},${g},${b})`
 }
 
-function roundRect(ctx, x, y, w, h, r) {
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
   ctx.lineTo(x + w - r, y)
