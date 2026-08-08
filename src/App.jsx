@@ -23,8 +23,8 @@ export default function App() {
   const dirRef = useRef({ x: 1, y: 0 })
   const nextDirRef = useRef({ x: 1, y: 0 })
   const foodRef = useRef({ x: 15, y: 10, color: '#e74c3c', glow: '#ff7b7b', points: 10 })
-  const snakeColorRef = useRef('#2ecc71')
-  const snakeGlowRef = useRef('#7af0a8')
+  const snakeColorRef = useRef('#0ea5e9')
+  const snakeGlowRef = useRef('#7dd3fc')
   const loopRef = useRef(null)
   const speedRef = useRef(INITIAL_SPEED)
 
@@ -55,7 +55,7 @@ export default function App() {
     const food = foodRef.current
     const dir = dirRef.current
 
-    ctx.fillStyle = '#0f2e1f'
+    ctx.fillStyle = '#0a1e3a'
     ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
     ctx.strokeStyle = 'rgba(255,255,255,0.04)'
@@ -84,7 +84,7 @@ export default function App() {
       if (i === 0) { ctx.shadowColor = glowColor; ctx.shadowBlur = 10 } else ctx.shadowBlur = 0
       roundRect(ctx, seg.x * TILE + 1, seg.y * TILE + 1, TILE - 2, TILE - 2, 5)
       if (i === 0) {
-        ctx.fillStyle = '#0a1f14'
+        ctx.fillStyle = '#070f2a'
         const cx = seg.x * TILE + TILE / 2
         const cy = seg.y * TILE + TILE / 2
         let ex1 = cx - 4, ey1 = cy - 3, ex2 = cx + 4, ey2 = cy - 3
@@ -163,8 +163,8 @@ export default function App() {
     snakeRef.current = [{ x: 10, y: 10 }]
     dirRef.current = { x: 1, y: 0 }
     nextDirRef.current = { x: 1, y: 0 }
-    snakeColorRef.current = '#2ecc71'
-    snakeGlowRef.current = '#7af0a8'
+    snakeColorRef.current = '#0ea5e9'
+    snakeGlowRef.current = '#7dd3fc'
     speedRef.current = INITIAL_SPEED
     scoreRef.current = 0
     setScore(0)
