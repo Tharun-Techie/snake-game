@@ -6,12 +6,25 @@ const CANVAS_SIZE = 600
 const TILE = CANVAS_SIZE / GRID
 const INITIAL_SPEED = 110
 
+const FRUITS = [
+  { color: '#e74c3c', glow: '#ff7b7b', name: 'apple' , points: 10 }, // red
+  { color: '#f1c40f', glow: '#ffe67a', name: 'banana', points: 10 }, // yellow
+  { color: '#9b59b6', glow: '#d6a8ff', name: 'grape' , points: 10 }, // purple
+  { color: '#e67e22', glow: '#ffb86a', name: 'orange', points: 10 }, // orange
+  { color: '#3498db', glow: '#7ac0ff', name: 'berry' , points: 15 }, // blue - bonus
+  { color: '#ff6b9d', glow: '#ff9ec1', name: 'cherry', points: 15 }, // pink - bonus
+  { color: '#2ecc71', glow: '#7af0a8', name: 'kiwi'  , points: 10 }, // green
+  { color: '#ffd700', glow: '#fff08a', name: 'star'  , points: 20 }, // gold - rare bonus
+]
+
 export default function App() {
   const canvasRef = useRef(null)
   const snakeRef = useRef([{ x: 10, y: 10 }])
   const dirRef = useRef({ x: 1, y: 0 })
   const nextDirRef = useRef({ x: 1, y: 0 })
-  const foodRef = useRef({ x: 15, y: 10 })
+  const foodRef = useRef({ x: 15, y: 10, color: '#e74c3c', glow: '#ff7b7b', points: 10 })
+  const snakeColorRef = useRef('#2ecc71')
+  const snakeGlowRef = useRef('#7af0a8')
   const loopRef = useRef(null)
   const speedRef = useRef(INITIAL_SPEED)
 
@@ -27,7 +40,11 @@ export default function App() {
     do {
       pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) }
     } while (snakeRef.current.some(s => s.x === pos.x && s.y === pos.y))
-    foodRef.current = pos
+    // weighted: make gold rare (5% chance)
+    let fruit
+    if (Math.random() < 0.05) fruit = FRUITS[7] // gold star rare
+    else fruit = FRUITS[Math.floor(Math.random() * (FRUITS.length - 1))]
+    foodRef.current = { ...pos, ...fruit }
   }
 
   const draw = () => {
@@ -47,17 +64,24 @@ export default function App() {
       ctx.beginPath(); ctx.moveTo(0, i * TILE); ctx.lineTo(CANVAS_SIZE, i * TILE); ctx.stroke()
     }
 
-    // food
-    ctx.fillStyle = '#e74c3c'
-    ctx.shadowColor = '#e74c3c'
-    ctx.shadowBlur = 12
-    roundRect(ctx, food.x * TILE + 2, food.y * TILE + 2, TILE - 4, TILE - 4, 6)
+    // food - colorful with glow matching fruit
+    ctx.fillStyle = food.color
+    ctx.shadowColor = food.glow || food.color
+    ctx.shadowBlur = food.points >= 20 ? 18 : food.points >= 15 ? 14 : 12
+    roundRect(ctx, food.x * TILE + 2, food.y * TILE + 2, TILE - 4, TILE - 4, 8)
+    // inner highlight for juicy look
     ctx.shadowBlur = 0
+    ctx.fillStyle = 'rgba(255,255,255,0.35)'
+    const hlSize = TILE * 0.22
+    roundRect(ctx, food.x * TILE + 6, food.y * TILE + 6, hlSize, hlSize, 4)
 
-    // snake
+    // snake - color follows last eaten fruit
+    const headColor = snakeColorRef.current
+    const bodyColor = darkenColor(headColor, 20)
+    const glowColor = snakeGlowRef.current
     snake.forEach((seg, i) => {
-      ctx.fillStyle = i === 0 ? '#2ecc71' : '#27ae60'
-      if (i === 0) { ctx.shadowColor = '#2ecc71'; ctx.shadowBlur = 10 } else ctx.shadowBlur = 0
+      ctx.fillStyle = i === 0 ? headColor : bodyColor
+      if (i === 0) { ctx.shadowColor = glowColor; ctx.shadowBlur = 10 } else ctx.shadowBlur = 0
       roundRect(ctx, seg.x * TILE + 1, seg.y * TILE + 1, TILE - 2, TILE - 2, 5)
       if (i === 0) {
         ctx.fillStyle = '#0a1f14'
@@ -101,7 +125,11 @@ export default function App() {
     }
     snakeRef.current.unshift(head)
     if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
-      const newScore = scoreRef.current + 10
+      const eaten = foodRef.current
+      // snake adopts fruit color
+      snakeColorRef.current = eaten.color
+      snakeGlowRef.current = eaten.glow || eaten.color
+      const newScore = scoreRef.current + (eaten.points || 10)
       scoreRef.current = newScore
       setScore(newScore)
       if (newScore > highScoreRef.current) {
@@ -135,6 +163,8 @@ export default function App() {
     snakeRef.current = [{ x: 10, y: 10 }]
     dirRef.current = { x: 1, y: 0 }
     nextDirRef.current = { x: 1, y: 0 }
+    snakeColorRef.current = '#2ecc71'
+    snakeGlowRef.current = '#7af0a8'
     speedRef.current = INITIAL_SPEED
     scoreRef.current = 0
     setScore(0)
@@ -226,6 +256,14 @@ export default function App() {
       )}
     </div>
   )
+}
+
+function darkenColor(hex, amt = 20) {
+  // hex #rrggbb -> darker
+  const num = parseInt(hex.replace('#',''),16)
+  let r = (num >> 16) - amt, g = ((num >> 8) & 0xFF) - amt, b = (num & 0xFF) - amt
+  r = Math.max(0, Math.min(255,r)); g = Math.max(0, Math.min(255,g)); b = Math.max(0, Math.min(255,b))
+  return `rgb(${r},${g},${b})`
 }
 
 function roundRect(ctx, x, y, w, h, r) {
