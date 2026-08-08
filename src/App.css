@@ -18,6 +18,17 @@ h1 {
   letter-spacing: 3px;
   margin-bottom: 12px;
   text-shadow: 0 2px 10px rgba(0,255,100,0.4);
+  font-size: 28px;
+}
+.badge {
+  font-size: 12px;
+  background: #61dafb;
+  color: #0a1f14;
+  padding: 3px 7px;
+  border-radius: 6px;
+  vertical-align: middle;
+  margin-left: 8px;
+  letter-spacing: 1px;
 }
 .score-board {
   display:flex;
@@ -80,6 +91,5 @@ button:active { transform: scale(0.97); }
   min-width: 260px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-.overlay.hidden { display:none; }
-#overlayText { margin-bottom: 6px; color:#2ecc71; }
-#overlaySub { opacity:0.8; margin-bottom:14px; font-size:0.9rem; }
+.overlay h2 { margin-bottom: 6px; color:#2ecc71; }
+.overlay p { opacity:0.8; margin-bottom:14px; font-size:0.9rem; }

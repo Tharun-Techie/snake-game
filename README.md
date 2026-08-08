@@ -1,58 +1,66 @@
-# Snake Game 🐍
+# Snake Game 🐍 — React (Vanilla Vite)
 
-Minimal HTML/CSS/JS snake game. 20x20 grid, canvas-based.
-## Run Localy
-- ** click on html
+React 19 + Vite + Canvas 2D. 20×20 grid, 600×600 canvas, wall-loop mode.
+
+## Run Locally (base `C:\Users\THARUN\snake-game`)
+```powershell
+npm install
+npm run dev
+# → http://localhost:5173
+```
+Build: `npm run build` → `npm run preview`
+
 ## Controls
-- **Arrow / WASD** : Move
-- **Space** : Pause / Resume
-- **R / Start button** : Restart
-- Mobile: on-screen D-pad
+- **Arrow / WASD**: Move (180° reverse blocked)
+- **Space**: Pause / Resume
+- **R / Start Button**: Restart
+- Mobile D-pad + wall loop (wrap-around), death only on self-collision
 
-## Files
+## Structure
 ```
 snake-game/
-├─ index.html  # layout: canvas 400x400, scoreboard, overlay
-├─ style.css   # theme, grid, overlay, responsive controls
-├─ script.js   # core loop + render
-└─ README.md
+├─ index.html          # Vite entry
+├─ vite.config.js      # @vitejs/plugin-react
+├─ package.json        # react, react-dom, vite
+├─ public/
+└─ src/
+   ├─ main.jsx         # ReactDOM.createRoot
+   ├─ App.jsx          # game component (hooks + canvas)
+   ├─ App.css          # game theme (ported from vanilla style.css)
+   └─ index.css        # minimal root styles
 ```
 
-## Architecture
+## Architecture (React Vanilla)
 
-**Stack:** Vanilla JS (no deps) + Canvas 2D. Single game loop via `setInterval`.
+**Stack:** Vanilla React (no state lib) + Canvas 2D. Hooks hold mutable game refs to avoid stale closures.
 
 ```
-[ Input ] -> nextDir -> [ Tick Loop ] -> [ State ] -> [ Render ]
-              ^              | 110ms (speed--)      |
-              |           collision/food/score      v
-           Keyboard + Buttons                    Canvas 2D + DOM Score
+[Input: key / click] → nextDirRef
+        ↓
+   [tick @ speedRef (110→50ms)] → snakeRef / foodRef / scoreRef → [draw(canvasRef)]
+        ↓                          ↑ wrap (x+GRID)%GRID
+     self-collision → gameOver → overlay (React state)
 ```
 
-**Core State (`script.js`):**
-- `GRID=20`, `TILE=20px` (400/20)
-- `snake: [{x,y}]` head at [0], `dir/nextDir: {x,y}`, `food: {x,y}`
-- `score, highScore (localStorage), speed, isPaused, isGameOver`, `loop: Interval`
+**State vs Refs (`src/App.jsx`):**
+- `GRID=20`, `CANVAS_SIZE=600`, `TILE=30`
+- Refs (mutable): `snakeRef[{x,y}]`, `dirRef`, `nextDirRef`, `foodRef`, `speedRef`, `loopRef`, `scoreRef/highScoreRef/isPausedRef/isGameOverRef`
+- State (render): `score`, `highScore(localStorage:snakeHighScore)`, `isPaused`, `isGameOver`, `showOverlay`
+- `draw()` reads refs + `dirRef` for eyes, draws grid/food/snake/pause directly to canvas
 
-**Loop `tick()` @ `speed` ms:**
-1. `dir = nextDir` (prevents 180° reverse)
-2. `head = snake[0] + dir` → wall check `0<=x<GRID` → `gameOver()` if out
-3. self-collision `snake.some()` → `gameOver()`
-4. `unshift(head)` → if `head==food`: `score+=10`, `highScore` persist, `speed-=8/50pts`, `placeFood()` else `pop()`
+**Loop `tick()`:**
+1. `dir = nextDir`
+2. `head = snake[0]+dir` → wrap `head.x=(head.x+GRID)%GRID`
+3. `snake.some(head)` → `gameOver()` if self-hit
+4. `unshift(head)` → if `head==food`: `+10`, persist highScore, `speed-=8` per 50pts (re-interval), `placeFood()` else `pop()`
 5. `draw()`
 
-**Render `draw()`:**
-- Clear + faint grid lines (rgba 0.04)
-- Food: `roundRect` + shadow (`#e74c3c`)
-- Snake: head `#2ecc71` + glow + eyes (offset by dir), body `#27ae60`
-- Pause overlay via canvas text
+**Lifecycle:**
+- `useEffect` mount: `init()` + `keydown` listener + interval; cleanup on unmount
+- `init()`: reset refs/state, `placeFood()`, `setInterval(tick, speed)`
+- `setDir(x,y)` blocks reverse (checks `dirRef` & `nextDirRef`)
+- `togglePause()` flips `isPaused` + forces `draw()`
 
-**Food `placeFood()`:** random `{x,y}` not in `snake`.
+**Render:** Canvas 600px (`max-width:92vw`), overlay is React conditional, not canvas text. CSS ported from vanilla `style.css:1`.
 
-**Input:** `keydown` → `setDir()` (blocks reverse), buttons `data-dir`, `togglePause()` blocks when `isGameOver`.
-
-**Game Over:** `clearInterval`, shows overlay with `score/highScore`.
-
-**Scoring:** +10/food, high score in `localStorage:snakeHighScore`.
-
-**Performance:** O(n) self-check (n<400), <1ms/frame, 9-20 FPS (110ms→50ms).
+**Previous Vanilla:** backed up to `C:\Users\THARUN\snake-game-vanilla\` (index.html/style.css/script.js)
