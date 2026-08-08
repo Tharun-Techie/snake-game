@@ -1,0 +1,21 @@
+name: Branch Validation
+
+# Restrict merges into `master` so they can only come from `main`
+# This workflow is used as a required status check in a GitHub Ruleset
+on:
+  pull_request:
+    branches: [master]  # target branch
+
+jobs:
+  validate-source-branch:  # <-- exact name to add in Ruleset "Require status checks"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source branch
+        run: |
+          echo "Target branch: ${{ github.base_ref }}"
+          echo "Source branch: ${{ github.head_ref }}"
+          if [[ "${{ github.head_ref }}" != "main" ]]; then
+            echo "::error::PRs to 'master' must originate from 'main' (got '${{ github.head_ref }}')"
+            exit 1
+          fi
+          echo "✅ Source branch validated: ${{ github.head_ref }} → ${{ github.base_ref }}"
