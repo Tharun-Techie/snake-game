@@ -23,6 +23,8 @@ export default function App() {
   const dirRef = useRef({ x: 1, y: 0 })
   const nextDirRef = useRef({ x: 1, y: 0 })
   const foodRef = useRef({ x: 15, y: 10, color: '#e74c3c', glow: '#ff7b7b', points: 10 })
+  const snakeColorRef = useRef('#2ecc71')
+  const snakeGlowRef = useRef('#7af0a8')
   const loopRef = useRef(null)
   const speedRef = useRef(INITIAL_SPEED)
 
@@ -73,10 +75,13 @@ export default function App() {
     const hlSize = TILE * 0.22
     roundRect(ctx, food.x * TILE + 6, food.y * TILE + 6, hlSize, hlSize, 4)
 
-    // snake
+    // snake - color follows last eaten fruit
+    const headColor = snakeColorRef.current
+    const bodyColor = darkenColor(headColor, 20)
+    const glowColor = snakeGlowRef.current
     snake.forEach((seg, i) => {
-      ctx.fillStyle = i === 0 ? '#2ecc71' : '#27ae60'
-      if (i === 0) { ctx.shadowColor = '#2ecc71'; ctx.shadowBlur = 10 } else ctx.shadowBlur = 0
+      ctx.fillStyle = i === 0 ? headColor : bodyColor
+      if (i === 0) { ctx.shadowColor = glowColor; ctx.shadowBlur = 10 } else ctx.shadowBlur = 0
       roundRect(ctx, seg.x * TILE + 1, seg.y * TILE + 1, TILE - 2, TILE - 2, 5)
       if (i === 0) {
         ctx.fillStyle = '#0a1f14'
@@ -120,7 +125,11 @@ export default function App() {
     }
     snakeRef.current.unshift(head)
     if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
-      const newScore = scoreRef.current + (foodRef.current.points || 10)
+      const eaten = foodRef.current
+      // snake adopts fruit color
+      snakeColorRef.current = eaten.color
+      snakeGlowRef.current = eaten.glow || eaten.color
+      const newScore = scoreRef.current + (eaten.points || 10)
       scoreRef.current = newScore
       setScore(newScore)
       if (newScore > highScoreRef.current) {
@@ -154,6 +163,8 @@ export default function App() {
     snakeRef.current = [{ x: 10, y: 10 }]
     dirRef.current = { x: 1, y: 0 }
     nextDirRef.current = { x: 1, y: 0 }
+    snakeColorRef.current = '#2ecc71'
+    snakeGlowRef.current = '#7af0a8'
     speedRef.current = INITIAL_SPEED
     scoreRef.current = 0
     setScore(0)
@@ -245,6 +256,14 @@ export default function App() {
       )}
     </div>
   )
+}
+
+function darkenColor(hex, amt = 20) {
+  // hex #rrggbb -> darker
+  const num = parseInt(hex.replace('#',''),16)
+  let r = (num >> 16) - amt, g = ((num >> 8) & 0xFF) - amt, b = (num & 0xFF) - amt
+  r = Math.max(0, Math.min(255,r)); g = Math.max(0, Math.min(255,g)); b = Math.max(0, Math.min(255,b))
+  return `rgb(${r},${g},${b})`
 }
 
 function roundRect(ctx, x, y, w, h, r) {
