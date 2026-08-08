@@ -1,0 +1,22 @@
+name: Auto Open PR to Master
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Open Pull Request
+        uses: repo-sync/pull-request@v2
+        with:
+          source_branch: "main"
+          destination_branch: "master"
+          pr_title: "Automated PR: Sync main to master"
+          pr_body: "This PR was automatically generated because new commits were pushed to the `main` branch."
+          github_token: ${{ secrets.GITHUB_TOKEN }}
