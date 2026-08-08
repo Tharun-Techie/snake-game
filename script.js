@@ -40,12 +40,13 @@ function placeFood() {
 function tick() {
   if(isPaused || isGameOver) return;
   dir = nextDir;
-  const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+  let head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
 
-  // wall collision
-  if(head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) return gameOver();
+  // wall loop (wrap around) - no wall death
+  head.x = (head.x + GRID) % GRID;
+  head.y = (head.y + GRID) % GRID;
 
-  // self collision
+  // self collision - only death condition
   if(snake.some(s => s.x===head.x && s.y===head.y)) return gameOver();
 
   snake.unshift(head);
