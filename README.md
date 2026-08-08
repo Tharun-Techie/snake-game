@@ -2,8 +2,8 @@
 
 React 19 + Vite + Canvas 2D. 20×20 grid, 600×600 canvas, wall-loop mode.
 
-## Run Locally (base `C:\Users\THARUN\snake-game`)
-```powershell
+## Run Locally
+```bash
 npm install
 npm run dev
 # → http://localhost:5173
@@ -20,13 +20,13 @@ Build: `npm run build` → `npm run preview`
 ```
 snake-game/
 ├─ index.html          # Vite entry
-├─ vite.config.js      # @vitejs/plugin-react
+├─ vite.config.ts      # @vitejs/plugin-react
 ├─ package.json        # react, react-dom, vite
 ├─ public/
 └─ src/
-   ├─ main.jsx         # ReactDOM.createRoot
-   ├─ App.jsx          # game component (hooks + canvas)
-   ├─ App.css          # game theme (ported from vanilla style.css)
+   ├─ main.tsx         # ReactDOM.createRoot
+   ├─ App.tsx          # game component (hooks + canvas)
+   ├─ App.css          # neon blue theme
    └─ index.css        # minimal root styles
 ```
 
@@ -42,7 +42,7 @@ snake-game/
      self-collision → gameOver → overlay (React state)
 ```
 
-**State vs Refs (`src/App.jsx`):**
+**State vs Refs (`src/App.tsx`):**
 - `GRID=20`, `CANVAS_SIZE=600`, `TILE=30`
 - Refs (mutable): `snakeRef[{x,y}]`, `dirRef`, `nextDirRef`, `foodRef`, `speedRef`, `loopRef`, `scoreRef/highScoreRef/isPausedRef/isGameOverRef`
 - State (render): `score`, `highScore(localStorage:snakeHighScore)`, `isPaused`, `isGameOver`, `showOverlay`
@@ -61,6 +61,6 @@ snake-game/
 - `setDir(x,y)` blocks reverse (checks `dirRef` & `nextDirRef`)
 - `togglePause()` flips `isPaused` + forces `draw()`
 
-**Render:** Canvas 600px (`max-width:92vw`), overlay is React conditional, not canvas text. CSS ported from vanilla `style.css:1`.
+**Render:** Canvas 600px (`max-width:92vw`), overlay is React conditional, not canvas text.
 
-**Previous Vanilla:** backed up to `C:\Users\THARUN\snake-game-vanilla\` (index.html/style.css/script.js)
+**Previous Vanilla:** vanilla implementation archived locally (not tracked)
